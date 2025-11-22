@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Net Effective Rent Calculator | Commercial Real Estate</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Net Effective Rent <span class="highlight">Calculator</span></h1>
+            <p>Commercial Real Estate Lease Analysis</p>
+        </header>
+
+        <main>
+            <section class="inputs-section glass-panel">
+                <div class="inputs-top-grid">
+                    <!-- Column 1: Lease Parameters -->
+                    <div class="input-column">
+                        <h3>Lease Parameters</h3>
+                        <div class="input-group">
+                            <label for="leaseTerm">Lease Term (Months)</label>
+                            <input type="number" id="leaseTerm" value="60" min="1">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="squareFootage">Rentable Area (SF)</label>
+                            <input type="number" id="squareFootage" value="5000" min="1">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="tmiPsf">TMI (Operating Costs) ($/SF)</label>
+                            <div class="input-wrapper">
+                                <span class="prefix">$</span>
+                                <input type="number" id="tmiPsf" value="15.00" step="0.01">
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="discountRate">Discount Rate (%) <span class="tooltip"
+                                    title="Nominal rate, compounded monthly">?</span></label>
+                            <div class="input-wrapper">
+                                <input type="number" id="discountRate" value="8.0" step="0.1">
+                                <span class="suffix">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Escalation & Concessions -->
+                    <div class="input-column">
+                        <h3>Escalation & Concessions</h3>
+
+                        <div class="input-group">
+                            <label>Rent Escalation Method</label>
+                            <div class="toggle-container">
+                                <input type="radio" name="escMethod" id="escPct" value="pct" checked>
+                                <label for="escPct">% Increase</label>
+
+                                <input type="radio" name="escMethod" id="escFixed" value="fixed">
+                                <label for="escFixed">Fixed $</label>
+
+                                <input type="radio" name="escMethod" id="escManual" value="manual">
+                                <label for="escManual">Manual</label>
+                            </div>
+                        </div>
+
+                        <!-- Auto-Calculation Inputs -->
+                        <div id="autoEscInputs">
+                            <div class="input-group">
+                                <label for="startBaseRent">Starting Base Rent ($/SF)</label>
+                                <div class="input-wrapper">
+                                    <span class="prefix">$</span>
+                                    <input type="number" id="startBaseRent" value="45.00" step="0.01">
+                                </div>
+                            </div>
+
+                            <div class="input-group" id="pctInputGroup">
+                                <label for="escPctValue">Annual Increase (%)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="escPctValue" value="3.0" step="0.1">
+                                    <span class="suffix">%</span>
+                                </div>
+                            </div>
+
+                            <div class="input-group hidden" id="fixedInputGroup">
+                                <label for="escFixedValue">Annual Increase ($/SF)</label>
+                                <div class="input-wrapper">
+                                    <span class="prefix">$</span>
+                                    <input type="number" id="escFixedValue" value="1.00" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <div class="input-group">
+                            <label for="freeRent">Free Rent (Months)</label>
+                            <div class="split-inputs">
+                                <input type="number" id="freeRent" value="3" min="0">
+                                <select id="freeRentType">
+                                    <option value="net">Net Free Rent</option>
+                                    <option value="gross">Gross Free Rent</option>
+                                </select>
+                            </div>
+                            <small>Applied at start of lease</small>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="tiAllowance">TI Allowance ($/SF)</label>
+                            <div class="input-wrapper">
+                                <span class="prefix">$</span>
+                                <input type="number" id="tiAllowance" value="20.00" step="0.01">
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="landlordWork">Landlord's Work ($/SF)</label>
+                            <div class="input-wrapper">
+                                <span class="prefix">$</span>
+                                <input type="number" id="landlordWork" value="0.00" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 3: Transaction Costs -->
+                    <div class="input-column">
+                        <h3>Transaction Costs</h3>
+
+                        <div class="input-group">
+                            <label>Commission Model</label>
+                            <div class="toggle-container">
+                                <input type="radio" name="commModel" id="modelOffice" value="office" checked>
+                                <label for="modelOffice">Office ($/SF)</label>
+
+                                <input type="radio" name="commModel" id="modelIndustrial" value="industrial">
+                                <label for="modelIndustrial">Industrial (% Rent)</label>
+                            </div>
+                        </div>
+
+                        <!-- Office Inputs -->
+                        <div id="officeInputs">
+                            <div class="input-group">
+                                <label for="listingFee">Listing Agent Fee ($/SF/Year)</label>
+                                <div class="input-wrapper">
+                                    <span class="prefix">$</span>
+                                    <input type="number" id="listingFee" value="0.50" step="0.01">
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="tenantRepFee">Tenant Rep Fee ($/SF/Year)</label>
+                                <div class="input-wrapper">
+                                    <span class="prefix">$</span>
+                                    <input type="number" id="tenantRepFee" value="1.00" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Industrial Inputs -->
+                        <div id="industrialInputs" class="hidden">
+                            <div class="input-group">
+                                <label>Listing Agent Fee (%)</label>
+                                <div class="split-inputs">
+                                    <div class="input-wrapper">
+                                        <label class="sub-label">Year 1</label>
+                                        <input type="number" id="listingFeeIndYr1" value="4.0" step="0.1">
+                                        <span class="suffix">%</span>
+                                    </div>
+                                    <div class="input-wrapper">
+                                        <label class="sub-label">Year 2+</label>
+                                        <input type="number" id="listingFeeIndYr2" value="2.0" step="0.1">
+                                        <span class="suffix">%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label>Tenant Rep Fee (%)</label>
+                                <div class="split-inputs">
+                                    <div class="input-wrapper">
+                                        <label class="sub-label">Year 1</label>
+                                        <input type="number" id="tenantRepFeeIndYr1" value="6.0" step="0.1">
+                                        <span class="suffix">%</span>
+                                    </div>
+                                    <div class="input-wrapper">
+                                        <label class="sub-label">Year 2+</label>
+                                        <input type="number" id="tenantRepFeeIndYr2" value="2.5" step="0.1">
+                                        <span class="suffix">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rent-schedule-section">
+                    <h3>Base Rent Schedule ($/SF/Year)</h3>
+                    <div class="rent-schedule-split">
+                        <!-- Years 1-5 -->
+                        <div class="schedule-col">
+                            <div class="year-row">
+                                <label>Year 1</label>
+                                <input type="number" class="rent-input" data-year="1" value="45.00" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 2</label>
+                                <input type="number" class="rent-input" data-year="2" value="46.35" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 3</label>
+                                <input type="number" class="rent-input" data-year="3" value="47.74" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 4</label>
+                                <input type="number" class="rent-input" data-year="4" value="49.17" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 5</label>
+                                <input type="number" class="rent-input" data-year="5" value="50.65" step="0.01"
+                                    disabled>
+                            </div>
+                        </div>
+
+                        <!-- Years 6-10 -->
+                        <div class="schedule-col">
+                            <div class="year-row">
+                                <label>Year 6</label>
+                                <input type="number" class="rent-input" data-year="6" value="52.17" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 7</label>
+                                <input type="number" class="rent-input" data-year="7" value="53.74" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 8</label>
+                                <input type="number" class="rent-input" data-year="8" value="55.35" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 9</label>
+                                <input type="number" class="rent-input" data-year="9" value="57.01" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 10</label>
+                                <input type="number" class="rent-input" data-year="10" value="58.72" step="0.01"
+                                    disabled>
+                            </div>
+                        </div>
+
+                        <!-- Years 11-15 -->
+                        <div class="schedule-col">
+                            <div class="year-row">
+                                <label>Year 11</label>
+                                <input type="number" class="rent-input" data-year="11" value="60.48" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 12</label>
+                                <input type="number" class="rent-input" data-year="12" value="62.29" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 13</label>
+                                <input type="number" class="rent-input" data-year="13" value="64.16" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 14</label>
+                                <input type="number" class="rent-input" data-year="14" value="66.09" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 15</label>
+                                <input type="number" class="rent-input" data-year="15" value="68.07" step="0.01"
+                                    disabled>
+                            </div>
+                        </div>
+
+                        <!-- Years 16-20 -->
+                        <div class="schedule-col">
+                            <div class="year-row">
+                                <label>Year 16</label>
+                                <input type="number" class="rent-input" data-year="16" value="70.11" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 17</label>
+                                <input type="number" class="rent-input" data-year="17" value="72.22" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 18</label>
+                                <input type="number" class="rent-input" data-year="18" value="74.38" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 19</label>
+                                <input type="number" class="rent-input" data-year="19" value="76.61" step="0.01"
+                                    disabled>
+                            </div>
+                            <div class="year-row">
+                                <label>Year 20</label>
+                                <input type="number" class="rent-input" data-year="20" value="78.91" step="0.01"
+                                    disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="results-section">
+                <div class="cards-grid">
+                    <div class="result-card glass-panel primary">
+                        <h3>Net Effective Rent</h3>
+                        <div class="value" id="nerValue">$0.00</div>
+                        <div class="unit">per SF / Year</div>
+                    </div>
+
+                    <div class="result-card glass-panel">
+                        <h3>Net Present Value</h3>
+                        <div class="value" id="npvValue">$0</div>
+                        <div class="unit">Total NPV</div>
+                    </div>
+
+                    <div class="result-card glass-panel">
+                        <h3>Total Lease Value</h3>
+                        <div class="value" id="totalValue">$0</div>
+                        <div class="unit">Over Term</div>
+                    </div>
+
+                    <div class="result-card glass-panel">
+                        <h3>Avg Monthly Rent</h3>
+                        <div class="value" id="avgMonthly">$0</div>
+                        <div class="unit">Effective</div>
+                    </div>
+
+                    <div class="result-card glass-panel">
+                        <h3>Total Concessions</h3>
+                        <div class="value" id="totalConcessions">$0</div>
+                        <div class="unit">Free Rent + TI + LL Work</div>
+                    </div>
+
+                    <div class="result-card glass-panel">
+                        <h3>Incentives / Yr 1 Gross</h3>
+                        <div class="value" id="incentivesPct">0.0%</div>
+                        <div class="unit">% of Year 1 Gross Rent</div>
+                    </div>
+
+                    <div class="result-card glass-panel">
+                        <h3>Landlord Payback</h3>
+                        <div class="value" id="paybackMonths">0</div>
+                        <div class="unit">Months to Breakeven</div>
+                    </div>
+                </div>
+
+                <div class="chart-container glass-panel">
+                    <canvas id="cashFlowChart"></canvas>
+                </div>
+
+                <div class="breakdown-toggle">
+                    <button id="toggleBreakdown" class="btn-secondary">View Annual Breakdown</button>
+                </div>
+
+                <div id="breakdownTableContainer" class="hidden glass-panel">
+                    <table id="breakdownTable">
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>Base Rent ($/SF)</th>
+                                <th>Annual Rent</th>
+                                <th>Free Rent</th>
+                                <th>Effective Rent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
